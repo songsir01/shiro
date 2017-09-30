@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ecej.mapper.UserMapper">
+	<resultMap type="com.ecej.pojo.User" id="userMap">
+		<id property="uid" column="uid" />
+		<result property="username" column="username" />
+		<result property="password" column="password" />
+		<result property="sex" column="sex" />
+		<result property="description" column="description" />
+		<collection property="roles" ofType="com.ecej.pojo.Role">
+			<id property="rid" column="rid" />
+			<result property="rname" column="rname" />
+			<collection property="modules" ofType="com.ecej.pojo.Module">
+				<id property="mid" column="mid" />
+				<result property="mname" column="mname" />
+			</collection>
+		</collection>
+	</resultMap>
+	<select id="findByUserName" parameterType="string" resultMap="userMap">
+		SELECT u.*,r.*,m.* FROM user u inner join user_role ur on ur.uid=u.uid
+		inner join role r on r.rid=ur.rid
+		inner join module_role mr on mr.rid=r.rid
+		inner join module m on mr.mid=m.mid
+		WHERE username=#{username};
+	</select>
+	<select id="getMeduleList" resultType="com.ecej.pojo.Module">
+		select * from module
+	</select>
+
+	<select id="getuniqueList" resultType="com.ecej.pojo.User"
+		parameterType="com.ecej.pojo.User">
+		select * from user where username=#{username}
+	</select>
+
+	<insert id="userAddAndGetId" parameterType="com.ecej.pojo.User"
+		keyProperty="uid" useGeneratedKeys="true">
+		insert into user
+		(username,password,sex,description)
+		values
+		(#{username},#{password},#{sex},#{description})
+	</insert>
+	<insert id="userAddRole" parameterType="com.ecej.pojo.User">
+		insert into user_role
+		(uid,rid)
+		values(#{uid},3)
+	</insert>
+
+	<select id="getUserCount" parameterType="com.ecej.util.vo.UserVo"
+		resultType="int">
+		select count(*)
+		from user
+		<if test="userName!=null">
+			where username like #{userName}
+		</if>
+	</select>
+	<select id="getRoleList" resultType="com.ecej.pojo.Role">
+		select * from role
+	</select>
+	<select id="getUserList" parameterType="com.ecej.util.vo.UserVo"
+		resultMap="userMap">
+		SELECT * FROM user u left join user_role ur on ur.uid=u.uid
+		left join role r on r.rid=ur.rid
+		<if test="userName!=null">
+			where u.username like #{userName}
+		</if>
+		<if test="startPage!=null and pageSize!=null">
+			order by u.uid
+			limit #{startPage},#{pageSize}
+		</if>
+	</select>
+	
+	<select id="getUserByUid" parameterType="com.ecej.util.vo.UserVo" resultMap="userMap">
+		SELECT u.*,r.*,m.* FROM user u left join user_role ur on ur.uid=u.uid
+		left join role r on r.rid=ur.rid
+		left join module_role mr on mr.rid=r.rid
+		left join module m on mr.mid=m.mid
+		WHERE u.uid=#{uid};
+	</select>
+	<delete id="delRoleByUid" parameterType="com.ecej.pojo.User">
+		delete from user_role where uid=#{uid}
+	</delete>
+	<insert id="addRoleByUid" parameterType="com.ecej.pojo.User">
+		insert into user_role (uid,rid) values(#{uid},#{rid})
+	</insert>
+	<update id="userUpdate" parameterType="com.ecej.pojo.User">
+		update user set sex=#{sex},description=#{description} where uid=#{uid}
+	</update>
+	<update id="userPassUpdate" parameterType="com.ecej.pojo.User">
+		update user set sex=#{sex},description=#{description},password=#{password} where uid=#{uid}
+	</update>
+	<delete id="userRoleDel" parameterType="int">
+		delete from user_role where uid=#{uid}
+	</delete>
+	<delete id="userDel" parameterType="int">
+		delete from user where uid=#{uid}
+	</delete>
+</mapper>
